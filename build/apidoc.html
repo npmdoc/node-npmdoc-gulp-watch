@@ -63,6 +63,15 @@
 
         <li>
 
+            <a class="apidocElementLiA" href="#apidoc.element.gulp-watch.gulp-watch">
+            function <span class="apidocSignatureSpan"></span>gulp-watch
+            <span class="apidocSignatureSpan">(globs, opts, cb)</span>
+            </a>
+
+        </li>
+
+        <li>
+
             <span class="apidocSignatureSpan">object <span class="apidocSignatureSpan">gulp-watch.</span>_defaultOptions</span>
 
         </li>
@@ -73,6 +82,153 @@
 
 <div class="apidocSectionDiv">
 <h1><a href="#apidoc.module.gulp-watch" id="apidoc.module.gulp-watch">module gulp-watch</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.gulp-watch.gulp-watch" id="apidoc.element.gulp-watch.gulp-watch">
+        function <span class="apidocSignatureSpan"></span>gulp-watch
+        <span class="apidocSignatureSpan">(globs, opts, cb)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function watch(globs, opts, cb) {
+	var originalGlobs = globs;
+	globs = normalizeGlobs(globs);
+
+	if (typeof opts === &#x27;function&#x27;) {
+		cb = opts;
+		opts = {};
+	}
+
+	opts = assign({}, watch._defaultOptions, opts);
+	cb = cb || function () {};
+
+	function resolveFilepath(filepath) {
+		if (pathIsAbsolute(filepath)) {
+			return path.normalize(filepath);
+		}
+		return path.resolve(opts.cwd || process.cwd(), filepath);
+	}
+
+	function resolveGlob(glob) {
+		var mod = &#x27;&#x27;;
+
+		if (glob[0] === &#x27;!&#x27;) {
+			mod = glob[0];
+			glob = glob.slice(1);
+		}
+
+		return mod + slash(resolveFilepath(glob));
+	}
+	globs = globs.map(resolveGlob);
+
+	var baseForced = Boolean(opts.base);
+	var outputStream = new Duplex({objectMode: true, allowHalfOpen: true});
+
+	outputStream._write = function _write(file, enc, done) {
+		cb(file);
+		this.push(file);
+		done();
+	};
+
+	outputStream._read = function _read() { };
+
+	var watcher = chokidar.watch(globs, opts);
+
+	opts.events.forEach(function (ev) {
+		watcher.on(ev, processEvent.bind(undefined, ev));
+	});
+
+	[&#x27;add&#x27;, &#x27;change&#x27;, &#x27;unlink&#x27;, &#x27;addDir&#x27;, &#x27;unlinkDir&#x27;, &#x27;error&#x27;, &#x27;ready&#x27;, &#x27;raw&#x27;]
+		.forEach(function (ev) {
+			watcher.on(ev, outputStream.emit.bind(outputStream, ev));
+		});
+
+	outputStream.add = function add(newGlobs) {
+		newGlobs = normalizeGlobs(newGlobs)
+			.map(resolveGlob);
+		watcher.add(newGlobs);
+		globs.push.apply(globs, newGlobs);
+	};
+	outputStream.unwatch = watcher.unwatch.bind(watcher);
+	outputStream.close = function () {
+		watcher.close();
+		this.emit(&#x27;end&#x27;);
+	};
+
+	function processEvent(event, filepath) {
+		filepath = resolveFilepath(filepath);
+		var fileOpts = assign({}, opts);
+
+		var glob;
+		var currentFilepath = filepath;
+		while (!(glob = globs[anymatch(globs, currentFilepath, true)]) &#x26;&#x26; currentFilepath !== (currentFilepath = path.dirname(currentFilepath
+))) {} // eslint-disable-line no-empty-blocks/no-empty-blocks
+
+		if (!glob) {
+			util.log(
+				util.colors.cyan(&#x27;[gulp-watch]&#x27;),
+				util.colors.yellow(&#x27;Watched unexpected path. This is likely a bug. Please open this link to report the issue:\n&#x27;) +
+				&#x27;https://github.com/floatdrop/gulp-watch/issues/new?title=&#x27; +
+				encodeURIComponent(&#x27;Watched unexpected filepath&#x27;) + &#x27;&#x26;body=&#x27; +
+				encodeURIComponent(&#x27;Node.js version: `&#x27; + process.version + &#x27; &#x27; + process.platform + &#x27; &#x27; + process.arch + &#x27;`\ngulp-watch version
+: `&#x27; + require(&#x27;./package.json&#x27;).version + &#x27;`\nGlobs: `&#x27; + JSON.stringify(originalGlobs) + &#x27;`\nFilepath: `&#x27; + filepath + &#x27;`\nEvent: `&#x27; + event + &#x27;`\nProcess CWD: `&#x27; + process.cwd() + &#x27;`\nOptions:\n```js\n&#x27; + JSON.stringify(opts, null, 2) + &#x27;\n```&#x27;)
+			);
+			return;
+		}
+
+		if (!baseForced) {
+			fileOpts.base = path.normalize(globParent(glob));
+		}
+
+		// Do not stat deleted files
+		if (event === &#x27;unlink&#x27; || event === &#x27;unlinkDir&#x27;) {
+			fileOpts.path = filepath;
+
+			write(event, null, new File(fileOpts));
+			return;
+		}
+
+		// Workaround for early read
+		setTimeout(function () {
+			vinyl.read(filepath, fileOpts).then(function (file) {
+				write(event, null, file);
+			});
+		}, opts.readDelay);
+	}
+
+	function write(event, err, file) {
+		if (err) {
+			outputStream.emit(&#x27;error&#x27;, err);
+			return;
+		}
+
+		if (opts.verbose) {
+			log(event, file);
+		}
+
+		file.event = event;
+		outputStream.push(file);
+		cb(file);
+	}
+
+	function log(event, file) {
+		event = event[event.length - 1] === &#x27;e&#x27; ? event + &#x27;d&#x27; : event + &#x27;ed&#x27;;
+
+		var msg = [util.colors.magenta(file.relative), &#x27;was&#x27;, event];
+
+		if (opts.name) {
+			msg.unshift(util.colors.cyan(opts.name) + &#x27; saw&#x27;);
+		}
+
+		util.log.apply(util, msg);
+	}
+
+	return outputStream;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
 
 
 

@@ -9,7 +9,7 @@
 <tspan x="10" y="106">  │ ├── arrify@1.0.1 </tspan>
 <tspan x="10" y="122">  │ └─┬ micromatch@2.3.11 </tspan>
 <tspan x="10" y="138">  │   ├─┬ arr-diff@2.0.0 </tspan>
-<tspan x="10" y="154">  │   │ └── arr-flatten@1.0.1 </tspan>
+<tspan x="10" y="154">  │   │ └── arr-flatten@1.0.3 </tspan>
 <tspan x="10" y="170">  │   ├── array-unique@0.2.1 </tspan>
 <tspan x="10" y="186">  │   ├─┬ braces@1.8.5 </tspan>
 <tspan x="10" y="202">  │   │ ├─┬ expand-range@1.8.2 </tspan>
@@ -104,7 +104,7 @@
 <tspan x="10" y="1626">  │ └── vinyl@0.5.3 </tspan>
 <tspan x="10" y="1642">  ├── object-assign@4.1.1 </tspan>
 <tspan x="10" y="1658">  ├── path-is-absolute@1.0.1 </tspan>
-<tspan x="10" y="1674">  ├─┬ readable-stream@2.2.8 </tspan>
+<tspan x="10" y="1674">  ├─┬ readable-stream@2.2.9 </tspan>
 <tspan x="10" y="1690">  │ ├── buffer-shims@1.0.0 </tspan>
 <tspan x="10" y="1706">  │ ├── core-util-is@1.0.2 </tspan>
 <tspan x="10" y="1722">  │ ├── isarray@1.0.0 </tspan>
